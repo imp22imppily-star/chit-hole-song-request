@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Clock3, Music, Trash2 } from "lucide-react";
 import { SongRequest, supabase } from "@/lib/supabase";
 
+const NUBEAM_CHANNEL = "nubeam";
+
 function formatTime(value: string) {
   return new Intl.DateTimeFormat("th-TH", {
     hour: "2-digit",
@@ -21,6 +23,7 @@ export function SongQueue() {
     const { data, error } = await supabase
       .from("song_requests")
       .select("*")
+      .or(`table_number.is.null,table_number.neq.${NUBEAM_CHANNEL}`)
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -81,7 +84,11 @@ export function SongQueue() {
   }
 
   async function clearQueue() {
-    await supabase.from("song_requests").delete().eq("status", "pending");
+    await supabase
+      .from("song_requests")
+      .delete()
+      .eq("status", "pending")
+      .or(`table_number.is.null,table_number.neq.${NUBEAM_CHANNEL}`);
     fetchRequests();
   }
 
